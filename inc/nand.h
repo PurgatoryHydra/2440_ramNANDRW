@@ -38,12 +38,15 @@
 #define 	NAND_ENABLE_RB() 	{__IO NFSTAT |= (1 << 2);}
 #define 	NAND_WAIT_BUSY() 	{while(!(__IO NFSTAT &( 0x1 << 0)));}
 
+#define PAGE_SIZE 512  //512*32 bits
+
 extern void NAND_Init();
 extern void NAND_Reset();
-extern void NAND_ReadID(uint8_t *data);
+extern void NAND_ReadID(uint32_t *data);
 extern void NAND_EraseBlock(uint16_t block);
-extern void NAND_ReadPage(uint16_t block, uint16_t pageIndex, uint8_t *buffer);
-extern void NAND_WritePage(uint16_t block, uint16_t pageIndex, uint8_t *buffer);
+extern void NAND_ReadPage(uint16_t block, uint16_t pageIndex, uint32_t *buffer);
+extern void NAND_WritePage(uint16_t block, uint16_t pageIndex, uint32_t *buffer);
+extern void NAND_MovingFromRAMToNANDStart(uint32_t *src, int32_t size);
 
 #endif
 

@@ -5,13 +5,13 @@
 
 uint32_t delay(void);
 
-uint8_t bufferToWrite[512] = {0x12};
-uint8_t bufferToRead[512] = {0x34};
-uint8_t bufferID[5] = {0, 0, 0, 0, 0};
+#define TRANSFER_SIZE 3000
+
+uint32_t bufferToTransfer[TRANSFER_SIZE] = {0};
 
 void Main()
 {
-	uint16_t i = 'a';
+	uint32_t i = 'a';
 	Damascus_GPIO_Init(GPIOB, 10, GPIO_MODE_OUTPUT);
 	Damascus_GPIO_Set(GPIOB, 10, false);
 	Damascus_UART_Init_Polling(UART0, 115200);
@@ -19,22 +19,14 @@ void Main()
 	NAND_Init();
 	Damascus_UART_SendString(UART0, "NAND Flash Controller initialized...\n\r");
 	
-	for(i = 512; i > 0; i--)
+	Damascus_UART_SendString(UART0, "copying from SDRAM. \r\n");
+	for(i = 0;i < TRANSFER_SIZE; i++)
 	{
-		bufferToWrite[i] = i % 256;
+		bufferToTransfer[i] = __IO (0x32000000+i*4);
 	}
-	NAND_EraseBlock(17);
-	NAND_WritePage(17, 1, bufferToWrite);
-	NAND_ReadPage(17, 1, bufferToRead);
-	Damascus_UART_SendString(UART0, "Read data: \n\r");
-	for(i = 0; i < 512; i++)
-	{
-		Damascus_UART_SendString(UART0, "%02x ", bufferToRead[i]);
-		if(!((i + 1) % 32))
-		{
-			Damascus_UART_SendString(UART0, "\n\r");
-		}
-	}
+	Damascus_UART_SendString(UART0, "copyed from SDRAM. \r\n");
+	NAND_WritePage(0, 0, bufferToTransfer);
+	NAND_MovingFromRAMToNANDStart(bufferToTransfer, TRANSFER_SIZE);	
 	while(1)
 	{
 	}
@@ -55,6 +47,6 @@ uint32_t delay()
 
 int raise(int signum)
 {
-	//printf("raise: Signal # %d caught\n", signum);
+	Damascus_UART_SendString(UART0, "raise: Signal # %d caught\n", signum);
 	return 0;
 }
