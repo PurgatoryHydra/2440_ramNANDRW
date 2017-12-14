@@ -6,24 +6,24 @@ extern uint32_t delay(void);
 
 void NAND_Init()
 {
-	Damascus_GPIO_Init(GPIOA, 17, GPIO_MODE_SPECIAL0);
-	Damascus_GPIO_Init(GPIOA, 18, GPIO_MODE_SPECIAL0);
-	Damascus_GPIO_Init(GPIOA, 19, GPIO_MODE_SPECIAL0);
-	Damascus_GPIO_Init(GPIOA, 20, GPIO_MODE_SPECIAL0);
-	Damascus_GPIO_Init(GPIOA, 21, GPIO_MODE_SPECIAL0);
-	Damascus_GPIO_Init(GPIOA, 22, GPIO_MODE_SPECIAL0);
+	Damascus_GPIO_Init(GPA, 17, GPIO_MODE_SPECIAL0);
+	Damascus_GPIO_Init(GPA, 18, GPIO_MODE_SPECIAL0);
+	Damascus_GPIO_Init(GPA, 19, GPIO_MODE_SPECIAL0);
+	Damascus_GPIO_Init(GPA, 20, GPIO_MODE_SPECIAL0);
+	Damascus_GPIO_Init(GPA, 21, GPIO_MODE_SPECIAL0);
+	Damascus_GPIO_Init(GPA, 22, GPIO_MODE_SPECIAL0);
 	
-	__IO NFCONF |= (1 << 12) | (4 << 8) | (1 << 4);
-	__IO NFCONT &=~ (1 << 12);
-	__IO NFCONT |= (1 << 0);
-	__IO NFSTAT &=~ 0xFFFFFFFF;
+	NAND->CONF |= (1 << 12) | (4 << 8) | (1 << 4);
+	NAND->CONT &=~ (1 << 12);
+	NAND->CONT |= (1 << 0);
+	NAND->STAT &=~ 0xFFFFFFFF;
 }
 
 void NAND_Reset()
 {
 	NAND_CS_L();
 	NAND_ENABLE_RB();
-	__IO NFCMMD = NAND_CMD_RESET;
+	NAND->CMMD = NAND_CMD_RESET;
 	NAND_WAIT_BUSY();
 	NAND_CS_H();
 }
@@ -32,18 +32,18 @@ void NAND_ReadID(uint32_t *data)
 {
 	NAND_CS_L();
 	NAND_ENABLE_RB();
-	__IO NFCMMD = NAND_CMD_READID;
-	__IO NFADDR = 0x00;
+	NAND->CMMD = NAND_CMD_READID;
+	NAND->ADDR = 0x00;
 	delay();
 	delay();
 	delay();
 	delay();
 	delay();
-	*data++ = __IO NFDATA;
-	*data++ = __IO NFDATA;
-	*data++ = __IO NFDATA;
-	*data++ = __IO NFDATA;
-	*data++ = __IO NFDATA;
+	*data++ = NAND->DATA;
+	*data++ = NAND->DATA;
+	*data++ = NAND->DATA;
+	*data++ = NAND->DATA;
+	*data++ = NAND->DATA;
 	NAND_CS_H();
 }
 
@@ -54,15 +54,15 @@ void NAND_EraseBlock(uint16_t block)
 	NAND_Reset();
 	NAND_CS_L();
 	NAND_ENABLE_RB();
-	__IO NFCMMD = NAND_CMD_ERASE1;
-	__IO NFADDR = blockIndex & 0xFF;
-	__IO NFADDR = (blockIndex >> 8) & 0xFF;
-	__IO NFADDR = (blockIndex >> 16) & 0xFF;
-	__IO NFCMMD = NAND_CMD_ERASE2;
+	NAND->CMMD = NAND_CMD_ERASE1;
+	NAND->ADDR = blockIndex & 0xFF;
+	NAND->ADDR = (blockIndex >> 8) & 0xFF;
+	NAND->ADDR = (blockIndex >> 16) & 0xFF;
+	NAND->CMMD = NAND_CMD_ERASE2;
 	delay();
 	NAND_WAIT_BUSY();
-	__IO NFCMMD = NAND_CMD_STATUS;
-	status = __IO NFDATA;
+	NAND->CMMD = NAND_CMD_STATUS;
+	status = NAND->DATA;
 	if(status & 0x01)
 	{
 		Damascus_UART_SendString(UART0, "erase in error.\r\n");
@@ -81,17 +81,17 @@ void NAND_ReadPage(uint16_t block, uint16_t pageIndex, uint32_t *buffer)
 	NAND_Reset();
 	NAND_CS_L();
 	NAND_ENABLE_RB();
-	__IO NFCMMD = NAND_CMD_READ1;
-	__IO NFADDR = 0x00;
-	__IO NFADDR = 0x00;
-	__IO NFADDR = page & 0xFF;
-	__IO NFADDR = (page >> 8) & 0xFF;
-	__IO NFADDR = (page >> 16) & 0x01;
-	__IO NFCMMD = NAND_CMD_READ2;
+	NAND->CMMD = NAND_CMD_READ1;
+	NAND->ADDR = 0x00;
+	NAND->ADDR = 0x00;
+	NAND->ADDR = page & 0xFF;
+	NAND->ADDR = (page >> 8) & 0xFF;
+	NAND->ADDR = (page >> 16) & 0x01;
+	NAND->CMMD = NAND_CMD_READ2;
 	NAND_WAIT_BUSY();
 	for(i = 0; i  < PAGE_SIZE; i++)
 	{
-		*buffer++ = __IO NFDATA;
+		*buffer++ = NAND->DATA;
 	}
 	NAND_CS_H();
 }
@@ -104,20 +104,20 @@ void NAND_WritePage(uint16_t block, uint16_t pageIndex, uint32_t *buffer)
 	NAND_Reset();
 	NAND_CS_L();
 	NAND_ENABLE_RB();
-	__IO NFCMMD = NAND_CMD_WRITE1;
-	__IO NFADDR = 0x0;
-	__IO NFADDR = 0x0;
-	__IO NFADDR = page & 0xFF;
-	__IO NFADDR = (page >> 8)  & 0xFF;
-	__IO NFADDR = (page >> 16) & 0x01;
+	NAND->CMMD = NAND_CMD_WRITE1;
+	NAND->ADDR = 0x0;
+	NAND->ADDR = 0x0;
+	NAND->ADDR = page & 0xFF;
+	NAND->ADDR = (page >> 8)  & 0xFF;
+	NAND->ADDR = (page >> 16) & 0x01;
 	for(i = 0;i < PAGE_SIZE; i++)
 	{
-		__IO NFDATA = *buffer++;
+		NAND->DATA = *buffer++;
 	}
-	__IO NFCMMD = NAND_CMD_WRITE2;
+	NAND->CMMD = NAND_CMD_WRITE2;
 	NAND_WAIT_BUSY();
-	__IO NFCMMD = NAND_CMD_STATUS;
-	status = __IO NFDATA;
+	NAND->CMMD = NAND_CMD_STATUS;
+	status = NAND->DATA;
 	if(status & 0x01)
 	{
 		Damascus_UART_SendString(UART0, "erase in error.\r\n");
