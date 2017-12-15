@@ -5,9 +5,10 @@ CFLAGS=-g -Iinc/ -I../Damascus_Sword_S3C2440/inc
 
 all:Main.c Damascus LocalSrc
 	$(CC) -g -Wall -nostartfiles -nostdlib -nodefaultlibs -o Main.bin Main.c \
+		-LObjects \
 		-L../Damascus_Sword_S3C2440/Objects -lDamascus \
-		-LObjects -lLocalSrc \
-		-L~/cross_compiler_4.4.3/lib/gcc/arm-none-linux-gnueabi/4.4.3/ -lgcc \
+		-L~/cross_compiler_4.4.3/lib/gcc/arm-none-linux-gnueabi/4.4.3/ \
+		-lLocalSrc  -lDamascus -lgcc\
 		-I../Damascus_Sword_S3C2440/inc/ \
 		-Iinc/ \
 		-eMain -Wl,-Ttext=0x30008000,-TMain.lds,-Map System.map
